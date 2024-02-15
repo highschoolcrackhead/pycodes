@@ -1,0 +1,28 @@
+# version 0.3 
+
+a = []
+while True:
+    try:
+        x = int(input('Enter: '))
+        if x not in a:
+            a.append(x)
+    except TypeError:
+        break
+c=[]
+for i in a:
+    for j in a:
+        for k in a:
+            if (i == j) or (i == k) or (j==k):
+                pass
+            else:
+                b=[]
+                if i + j + k == 3:
+                    b.append(i)
+                    b.append(j)
+                    b.append(k)
+                    c.append(set(b))
+d={}                    
+for i in c:
+    d[tuple(i)]=True
+for i in d.keys():
+    print(i)

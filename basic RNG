@@ -1,0 +1,14 @@
+# mash random numbers on your keyboard, gives random number between 0 and 50
+# version 0.3 
+# thanks to shubham for the question 
+a = int(input("Press random number on your keyboard!!"))
+b = ~a
+x = int((bin(b))[3:-1])
+y = (x|a) + (x&b)
+print(y)
+summ = 0
+for i in str(y):
+	summ += int(i)
+while summ > 50:
+	summ -= 49
+print(summ)

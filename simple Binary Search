@@ -1,0 +1,28 @@
+# simple binary search in list of sorted elements, very basic
+# version:0.1
+n = int(input('Enter no of terms: '))
+a = []
+for i in range(n):
+    x = int(input(f'Enter element {i+1}: '))
+    a.append(x)
+a.sort()
+val = int(input('Enter element: '))
+def binSearch(x : list, val : int, l : int):
+    pos = int(len(x)/2)
+    if val > x[pos]:
+        y = x[pos:]
+        l += len(y)
+        binSearch(y,val,l)
+    elif val < x[pos]:
+        y = x[0:pos]
+        l += len(y)
+        binSearch(y,val,l)
+    elif val == x[pos]:
+        if l == 0:
+            print(pos)
+        else:
+            print(l+1)
+if val in a:            
+  binSearch(a,val,0)
+else:
+  print('Value not in list')

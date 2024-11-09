@@ -1,5 +1,6 @@
 from tabulate import tabulate
-import pandas as pd
+from PIL import Image
+import qrcode as qr
 import mysql.connector as sql
 
 database = sql.connect(host='localhost', user='root', password='Pravar@123')
@@ -277,14 +278,16 @@ class Customer:
         cursor.execute('select * from inventory.product;')
         ch = ask_choice(cursor.fetchall(), 'Enter Product ID', True)
 
+        cursor.execute(f'select price, name, quantity from inventory.product where ID = {ch};')
+        data = cursor.fetchall()
+        price = data[0][0]
+        name = data[0][1]
+        stock = data[0][2]
+
         qty = abs(int(input('Enter Quantity: ')))
 
-        if qty != 0:
-            cursor.execute(f'select price, name from inventory.product where ID = {ch};')
-            data = cursor.fetchall()
-            print(data)
-            price = data[0][0]
-            name = data[0][1]
+        if (qty != 0) and (qty <= stock):
+            
             print('__'*15, '\n')
             print(f'Total amount: {qty*price} INR')
             
@@ -363,7 +366,7 @@ class Customer:
                 print('__'*15, '\n')
                 print('Payment succesfull, please collect your items at the counter')
             case 3:
-                pass
+                self.scan()
             case 4:
                 card_info = [input(f'Enter {i}:') for i in ['Card Number', 'Name on card', 'expiry date', 'CVV']]
                 print('__'*15, '\n')
@@ -372,12 +375,25 @@ class Customer:
         self.checkout()
         self.main()   
 
+    def scan(self):
+        text = 'https://github.com/highschoolcrackhead/pycodes/tree/main'
+
+        code = qr.make(text)
+        code.save('qrCode.img')
+        img = Image.open('qrCode.img')
+        img.show()
+
     def checkout(self):
         cursor.execute(f'select itemid, quantity from cart.{self.custID};')
         data = cursor.fetchall()
 
         for i in data:
             cursor.execute(f'update inventory.product set quantity = quantity - {i[1]} where ID = {i[0]};')
+            database.commit()
+        
+        cursor.execute(f'drop table cart.{self.custID};')
+        cursor.execute(f"update inventory.customer set cartempty = 1 where custid = '{self.custID}'")
+        database.commit()
 
     def feedback(self):
         pass

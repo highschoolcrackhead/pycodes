@@ -1,3 +1,5 @@
+#version 1.0
+
 from tabulate import tabulate
 from PIL import Image
 import qrcode as qr
@@ -14,10 +16,7 @@ cursor.execute('create database if not exists transaction;')
 cursor.execute('use inventory;')
 cursor.execute('create table if not exists product (ID int primary key, Name varchar(25), Brand varchar(25), Quantity int, Price float);')
 
-cursor.execute('create table if not exists customer (MobileNo bigint(10) primary key, FName varchar(15), LName varchar(15), CustID varchar(36), PIN int(4) default 9999, CartEmpty bool default True);')
-
-cursor.execute('use transaction;')
-cursor.execute('create table if not exists idx (TransID varchar(37) primary key, BuyerName varchar(25), DOP date, Amount float);')
+cursor.execute('create table if not exists customer (MobileNo bigint(10) primary key, FName varchar(15), LName varchar(15), CustID varchar(36), PIN int(4) default 9999, CartEmpty bool default True);')        
 
 print('Welcome to Inventory Manager')
 
@@ -42,7 +41,7 @@ def ask_choice(choice_list : list, question : str = "Enter choice", sql_table : 
         try:
             ch = abs(int(input(f'{question}: ')))
             if not check_choice:
-                return ch
+                return ch if ch else 0
             else:
                 if sql_table:
                     if ch not in id:
@@ -50,7 +49,7 @@ def ask_choice(choice_list : list, question : str = "Enter choice", sql_table : 
                     else:
                         break
                 else:
-                    if ch not in range(n +1):
+                    if ch not in range(n):
                         print('\n','Invalid choice!')
                     else:
                         break
@@ -61,7 +60,11 @@ def ask_choice(choice_list : list, question : str = "Enter choice", sql_table : 
 def homepage():
     ch = ask_choice(['Exit', 'Admin', 'Customer'])
     match ch:
-        case 0: exit()
+        case 0:
+            print('__'*15, '\n')
+            print('Thank you for using the inventory manager')
+            print('__'*15)
+            exit()
         case 1: Admin()
         case 2: Customer()
     
@@ -70,17 +73,16 @@ class Admin:
     def __init__(self):
         global admin_pin
 
-        pin = ask_choice(['Go Back','Forgot PIN'], 'Enter PIN', check_choice=False)
+        pin = ask_choice(['Go Back'], 'Enter PIN', check_choice=False)
         
         match pin:
             case 0: homepage()
-            case 1: pass
             case admin_pin: self.main()
  
 
     def main(self):
 
-        opt_list = ['Go Back', 'Add Item', 'Update Item', 'Delete Item', 'Display all items', 'Change PIN']
+        opt_list = ['Go Back', 'Add Item', 'Update Item', 'Delete Item', 'Display all items']
         ch = ask_choice(opt_list)
 
         match ch:
@@ -89,7 +91,6 @@ class Admin:
             case 2: self.update_item()
             case 3: self.delete_item()
             case 4: self.display()
-            case 5: self.change_pin()
     
     def add_item(self):
         print('__'*15, '\n')
@@ -186,38 +187,6 @@ class Admin:
         ask_choice(cursor.fetchall(), 'Enter 0 to continue', True, False)
         self.main()
 
-    def change_pin(self):
-        global admin_pin
-
-        try:
-            print('__'*15,'\n')
-            print('Enter 0 to go back')
-            curr_pin = int(input('Enter current PIN: '))
-        except:
-            print('__'*15, '\n')
-            print('Invalid Value!')
-            self.change_pin()
-            
-        if curr_pin == 0:
-            self.main()
-        elif curr_pin != admin_pin:
-            print('__'*15, '\n')
-            print('Wrong PIN!')
-            self.change_pin()
-        else:
-            new_pin = int(input('Enter new PIN: '))
-            if new_pin == admin_pin:
-                print('__'*15, '\n')
-                print('New PIN cannot be same as old PIN!')
-                self.change_pin()
-            elif new_pin == 0:
-                self.main()
-            else:
-                admin_pin = new_pin
-                print('__'*15, '\n')
-                print('Succesfully changed PIN!')
-                self.main()
-
 class Customer:
 
     def __init__(self):
@@ -262,7 +231,7 @@ class Customer:
 
     def main(self):
 
-        opt_list = ['Go Back', 'Buy Items', 'View available items', 'View/Edit Cart', 'Payment', 'Feedback']
+        opt_list = ['Go Back', 'Buy Items', 'View available items', 'View/Edit Cart', 'Payment', 'Contact Us']
         ch = ask_choice(opt_list)
 
         match ch:
@@ -372,8 +341,7 @@ class Customer:
                 print('__'*15, '\n')
                 print('Payment succesfull, please collect your items at the counter')
 
-        self.checkout()
-        self.main()   
+        self.checkout()   
 
     def scan(self):
         text = 'https://github.com/highschoolcrackhead/pycodes/tree/main'
@@ -383,7 +351,10 @@ class Customer:
         img = Image.open('qrCode.img')
         img.show()
 
+        self.checkout()
+
     def checkout(self):
+
         cursor.execute(f'select itemid, quantity from cart.{self.custID};')
         data = cursor.fetchall()
 
@@ -395,8 +366,17 @@ class Customer:
         cursor.execute(f"update inventory.customer set cartempty = 1 where custid = '{self.custID}'")
         database.commit()
 
+        self.main()
+
     def feedback(self):
-        pass
+        dump = cursor.fetchall()
+        print('__'*15, '\n')
+        print('You can reach us at:')
+        print('__'*15, '\n')
+        print(tabulate([['Email:', 'xyz@gmail.com'], ['Mobile:', '1234567890'], ['Facebook:', 'xyz'], ['Instagram:', 'xyz_shop'], ['Telegram:', 'XYZshop']], tablefmt='pretty'))
+
+        input('Press ENTER to continue')
+        self.main()
 
 if __name__ == "__main__":
     homepage()

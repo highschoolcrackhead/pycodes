@@ -1,4 +1,4 @@
-#version 1.0
+#version 1.2
 
 from tabulate import tabulate
 from PIL import Image
@@ -82,7 +82,7 @@ class Admin:
 
     def main(self):
 
-        opt_list = ['Go Back', 'Add Item', 'Update Item', 'Delete Item', 'Display all items']
+        opt_list = ['Go Back', 'Add Item', 'Update Item', 'Delete Item', 'Display all items', 'Check low stock Items', 'Check Customer details']
         ch = ask_choice(opt_list)
 
         match ch:
@@ -91,16 +91,23 @@ class Admin:
             case 2: self.update_item()
             case 3: self.delete_item()
             case 4: self.display()
-    
+            case 5: self.low_stock()
+            case 6: self.cust_details()
+
     def add_item(self):
         print('__'*15, '\n')
         print(tabulate({1:['0.'], 2:['Go Back']}, tablefmt='pretty'))
 
-        id = int(input('Enter Product ID: '))
-        name = "'" + input('Enter Product Name: ') + "'"
-        brand = "'" + input('Enter Product Brand: ') + "'"
-        qty = abs(int(input('Enter Quantity: ')))
-        price = abs(float(input('Enter Price: ')))
+        try:
+            id = int(input('Enter Product ID: '))
+            name = "'" + input('Enter Product Name: ') + "'"
+            brand = "'" + input('Enter Product Brand: ') + "'"
+            qty = abs(int(input('Enter Quantity: ')))
+            price = abs(float(input('Enter Price: ')))
+        except Exception as e:
+            print('__'*15, '\n')
+            print(e)
+            self.add_item()
 
         if id == 0 or name == '0' or brand == '0' or qty == 0 or price == 0:
             self.main()
@@ -108,6 +115,7 @@ class Admin:
 
             try:
                 cursor.execute(f"insert into inventory.product values ({id}, {name}, {brand}, {qty}, {price});")
+                database.commit()
             except Exception as e:
                 print('__'*15, '\n')
                 print(e)
@@ -132,7 +140,6 @@ class Admin:
         cursor.execute(f'select * from inventory.product where ID = {ch};')
 
         original = [i for i in cursor.fetchall()[0]]
-        print(original)
         updated = [input(f'Enter new {i}: ') for i in ['ID', 'Name', 'Brand', 'Qty', 'Price']]
         
         for i in range(len(updated)):
@@ -146,7 +153,6 @@ class Admin:
 
         updated[1] = "'" + updated[1] + "'"
         updated[2] = "'" + updated[2] + "'"
-        print(updated)
 
         try:
             cursor.execute(f"update inventory.product set ID = {updated[0]}, Name = {updated[1]}, Brand = {updated[2]}, Quantity = {updated[3]}, Price = {updated[4]} where ID = {ch};")
@@ -184,6 +190,16 @@ class Admin:
 
     def display(self):
         cursor.execute('select * from inventory.product;')
+        ask_choice(cursor.fetchall(), 'Enter 0 to continue', True, False)
+        self.main()
+
+    def low_stock(self):
+        cursor.execute('select * from inventory.product where quantity < 200;')
+        ask_choice(cursor.fetchall(), "Enter 0 to continue", True, False)
+        self.main()
+
+    def cust_details(self):
+        cursor.execute('select MobileNo, concat(Fname, " ", Lname) as "Name", if(CartEmpty, "True", "False") as "Empty Cart" from inventory.customer;')
         ask_choice(cursor.fetchall(), 'Enter 0 to continue', True, False)
         self.main()
 
@@ -274,7 +290,10 @@ class Customer:
                     match ch3:
                         case 0: self.main()
                         case 1: self.buy_item()
-        else: self.buy_item()
+        else:
+            print('__'*15, "\n")
+            print('Insufficient Quantity!') 
+            self.buy_item()
 
     def view_item(self):
         cursor.execute('select * from inventory.product;')
@@ -335,6 +354,8 @@ class Customer:
                 print('__'*15, '\n')
                 print('Payment succesfull, please collect your items at the counter')
             case 3:
+                print('__'*15, '\n')
+                print('Please scan the QR code')
                 self.scan()
             case 4:
                 card_info = [input(f'Enter {i}:') for i in ['Card Number', 'Name on card', 'expiry date', 'CVV']]
@@ -369,7 +390,7 @@ class Customer:
         self.main()
 
     def feedback(self):
-        dump = cursor.fetchall()
+
         print('__'*15, '\n')
         print('You can reach us at:')
         print('__'*15, '\n')

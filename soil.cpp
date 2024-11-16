@@ -4,7 +4,6 @@
 // added servo functionality and improved lcd
 
 #include <Wire.h>
-#include <Servo.h>
 #include <LiquidCrystal_I2C.h>
 #include <WiFi.h>
 #include <ESPAsyncWebServer.h>
@@ -13,15 +12,11 @@
 
 #define DHTPIN 4
 #define PIRPIN 5
-#define SERVOPIN 6
 #define RAINPIN 18
 #define SOILPIN 35
 #define MQ135PIN 32
 #define SMOKEPIN 23
 #define LDRPIN 34
-
-Servo servo;
-int servo_pos = 0;
 
 DHT dht(DHTPIN, DHT11);
 AsyncWebServer server(80);
@@ -33,8 +28,6 @@ const char* password = "123456789";
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 void setup() {
-	
-	servo.attach(SERVOPIN);
 	
     Serial.begin(115200);
     dht.begin();
@@ -53,11 +46,11 @@ void setup() {
     lcd.init();
     lcd.backlight();
 	
-	lcd.setCursor(0, 0);
-	lcd.print("Plant Monitoring");
-	lcd.setCursor(0, 1);
-	lcd.print("System Init...");
-	delay(1000);
+    lcd.setCursor(0, 0);
+    lcd.print("Plant Monitoring");
+    lcd.setCursor(0, 1);
+    lcd.print("System Init...");
+    delay(1000);
  
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
         request->send(200, "text/html", generateHTML());
@@ -141,20 +134,6 @@ String generateData() {
 }
 
 void loop() {
-	
-	if (dht.readTemperature() >= 26) || (analogRead(MQ135PIN) > 1000) || (digitalRead(SMOKEPIN) == HIGH) {
-		
-		servo.write(90);
-		delay(2500);
-		
-	}
-	
-	else {
-	
-		servo.write(0);
-		delay(10);
-	
-	}
     
     lcd.clear();
     lcd.setCursor(0, 0);
@@ -173,7 +152,7 @@ void loop() {
     lcd.print("Motion: ");
     lcd.print(digitalRead(PIRPIN) == HIGH ? "Yes" : "No");
     lcd.setCursor(0, 1);
-	lcd.print(" Rain: ");
+    lcd.print("Rain: ");
     lcd.print( digitalRead(RAINPIN) == LOW ? "Yes" : "No");
     delay(1500);
 
@@ -192,10 +171,10 @@ void loop() {
     lcd.setCursor(0, 0);
     lcd.print("CO2: ");
     lcd.print(analogRead(MQ135PIN));
-	lcd.print(" ppm");
+    lcd.print(" ppm");
     lcd.setCursor(0, 1);
-    lcd.print(" Smoke: ");
+    lcd.print("Smoke: ");
     lcd.print(digitalRead(SMOKEPIN) == HIGH ? "Yes" : "No");
-	delay(1500);
+    delay(1500);
   
 }

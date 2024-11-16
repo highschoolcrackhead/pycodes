@@ -1,4 +1,4 @@
-// version 1.2.3
+// version 1.2.4
 // ldr map reversed for light%
 // soil moisture expressed in % acc to min and max value
 // added servo functionality and improved lcd
@@ -153,7 +153,7 @@ void loop() {
     lcd.print(digitalRead(PIRPIN) == HIGH ? "Yes" : "No");
     lcd.setCursor(0, 1);
     lcd.print("Rain: ");
-    lcd.print(digitalRead(RAINPIN) == LOW ? "Yes" : "No");
+    lcd.print(digitalRead(RAINPIN) == HIGH ? "Yes" : "No");
     delay(1500);
 
     lcd.clear();

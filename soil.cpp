@@ -1,4 +1,4 @@
-// version 1.2
+// version 1.2.1
 // ldr map reversed for light%
 // soil moisture expressed in % acc to min and max value
 // added servo functionality and improved lcd
@@ -142,7 +142,7 @@ String generateData() {
 
 void loop() {
 	
-	if (dht.readTemperature() >= 26) or (analogRead(MQ135PIN) > 1000) or (digitalRead(SMOKEPIN) == HIGH) {
+	if (dht.readTemperature() >= 26) || (analogRead(MQ135PIN) > 1000) || (digitalRead(SMOKEPIN) == HIGH) {
 		
 		servo.write(90);
 		delay(2500);

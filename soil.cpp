@@ -1,4 +1,4 @@
-// version 1.2.1
+// version 1.2.3
 // ldr map reversed for light%
 // soil moisture expressed in % acc to min and max value
 // added servo functionality and improved lcd
@@ -118,7 +118,7 @@ String generateData() {
     int ldrValue = analogRead(LDRPIN);
     int co2Level = analogRead(MQ135PIN);
     bool smokeValue = digitalRead(SMOKEPIN) == HIGH;
-    float percentage = map(soilMoisture, 4095, 800, 0, 100);
+    float percentage = map(soilMoisture, 0, 4096, 0, 100);
 
     String json = "{";
     json += "\"temperature\":" + String(temperature, 1) + ",";
@@ -153,17 +153,17 @@ void loop() {
     lcd.print(digitalRead(PIRPIN) == HIGH ? "Yes" : "No");
     lcd.setCursor(0, 1);
     lcd.print("Rain: ");
-    lcd.print( digitalRead(RAINPIN) == LOW ? "Yes" : "No");
+    lcd.print(digitalRead(RAINPIN) == LOW ? "Yes" : "No");
     delay(1500);
 
     lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print("Light: ");
-    lcd.print(map(analogRead(LDRPIN), 20, 4096, 0, 100));
+    lcd.print(map(analogRead(LDRPIN), 4096, 0, 0, 100));
     lcd.print("%");
     lcd.setCursor(0, 1);
-    lcd.print(" Moisture: ");
-    lcd.print(map(analogRead(SOILPIN), 4096, 800, 0, 100));
+    lcd.print("Moisture: ");
+    lcd.print(map(analogRead(SOILPIN), 0, 4096, 0, 100));
     lcd.print("%");
     delay(1500);
 	

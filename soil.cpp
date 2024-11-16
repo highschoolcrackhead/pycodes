@@ -1,4 +1,4 @@
-// version 1.2.4
+// version 1.3
 // ldr map reversed for light%
 // soil moisture expressed in % acc to min and max value
 // added servo functionality and improved lcd
@@ -64,44 +64,141 @@ void setup() {
 }
 
 String generateHTML() {
-    String html = "<html><head><meta name='viewport' content='width=device-width, initial-scale=1'><style>"
-                  "body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }"
-                  "h1 { color: #333; }"
-                  "table { width: 100%; border-collapse: collapse; }"
-                  "th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }"
-                  "th { background-color: #f2f2f2; }"
-                  "</style></head><body>";
-    html += "<h1>Sensor Readings</h1>";
-    html += "<table>";
-    html += "<tr><th>Sensor</th><th>Value</th></tr>";
-    html += "<tr><td>Temperature (°C)</td><td id='tempValue'>Loading...</td></tr>";
-    html += "<tr><td>Humidity (%)</td><td id='humValue'>Loading...</td></tr>";
-    html += "<tr><td>Soil Moisture (%)</td><td id='soilValue'>Loading...</td></tr>";
-    html += "<tr><td>Rain Detected</td><td id='rainValue'>Loading...</td></tr>";
-    html += "<tr><td>Motion Detected</td><td id='motionValue'>Loading...</td></tr>";
-    html += "<tr><td>LDR Value</td><td id='ldrValue'>Loading...</td></tr>";
-    html += "<tr><td>CO2 Level (ppm)</td><td id='co2Value'>Loading...</td></tr>";
-	html += "<tr><td>Smoke Detected</td><td id='smokeValue'>Loading...</td></tr>";
-    html += "</table>";
-    html += "<script>"
-            "async function fetchData() {"
-            "  try {"
-            "    const response = await fetch('/data');"
-            "    const data = await response.json();"
-            "    document.getElementById('tempValue').innerText = data.temperature;"
-            "    document.getElementById('humValue').innerText = data.humidity;"
-            "    document.getElementById('soilValue').innerText = data.soilMoisture;"
-            "    document.getElementById('rainValue').innerText = data.rainDetected ? 'Yes' : 'No';"
-            "    document.getElementById('motionValue').innerText = data.motionDetected ? 'Yes' : 'No';"
-            "    document.getElementById('ldrValue').innerText = data.ldrValue;"
-            "    document.getElementById('co2Value').innerText = data.co2Level;"
-            "    document.getElementById('smokeValue').innerText = data.smokeValue ? 'Yes' : 'No';"
-            "  } catch (error) {"
-            "    console.error('Error fetching data:', error);"
-            "  }"
-            "}"
-            "setInterval(fetchData, 2000);"
-            "</script></body></html>";
+    String html = R"(
+    <html>
+    <head>
+      <meta name='viewport' content='width=device-width, initial-scale=1'>
+      <style>
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          margin: 0;
+          padding: 20px;
+          background-color: #f0f8ff;
+          color: #333;
+        }
+        .container {
+          max-width: 800px;
+          margin: 0 auto;
+          background-color: #ffffff;
+          border-radius: 10px;
+          box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+          padding: 20px;
+        }
+        h1 {
+          color: #2c3e50;
+          text-align: center;
+          margin-bottom: 30px;
+          font-size: 2.5em;
+          text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        table {
+          width: 100%;
+          border-collapse: separate;
+          border-spacing: 0 10px;
+        }
+        th, td {
+          padding: 15px;
+          text-align: left;
+          border-radius: 5px;
+        }
+        th {
+          background-color: #3498db;
+          color: white;
+          font-weight: bold;
+        }
+        tr:nth-child(even) {
+          background-color: #f2f2f2;
+        }
+        tr:hover {
+          background-color: #e0f7fa;
+          transition: background-color 0.3s ease;
+        }
+        .sensor-icon {
+          margin-right: 10px;
+          font-size: 1.2em;
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .fade-in {
+          animation: fadeIn 0.5s ease-in;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <h1>🌱 Plant Monitoring System 🌱</h1>
+        <table>
+          <tr>
+            <th>Sensor</th>
+            <th>Value</th>
+          </tr>
+          <tr>
+            <td><span class="sensor-icon">🌡️</span>Temperature (°C)</td>
+            <td id='tempValue' class="fade-in">Loading...</td>
+          </tr>
+          <tr>
+            <td><span class="sensor-icon">💧</span>Humidity (%)</td>
+            <td id='humValue' class="fade-in">Loading...</td>
+          </tr>
+          <tr>
+            <td><span class="sensor-icon">🌿</span>Soil Moisture (%)</td>
+            <td id='soilValue' class="fade-in">Loading...</td>
+          </tr>
+          <tr>
+            <td><span class="sensor-icon">☔</span>Rain Detected</td>
+            <td id='rainValue' class="fade-in">Loading...</td>
+          </tr>
+          <tr>
+            <td><span class="sensor-icon">🚶</span>Motion Detected</td>
+            <td id='motionValue' class="fade-in">Loading...</td>
+          </tr>
+          <tr>
+            <td><span class="sensor-icon">💡</span>Light Level</td>
+            <td id='ldrValue' class="fade-in">Loading...</td>
+          </tr>
+          <tr>
+            <td><span class="sensor-icon">🌫️</span>CO2 Level (ppm)</td>
+            <td id='co2Value' class="fade-in">Loading...</td>
+          </tr>
+          <tr>
+            <td><span class="sensor-icon">🚬</span>Smoke Detected</td>
+            <td id='smokeValue' class="fade-in">Loading...</td>
+          </tr>
+        </table>
+      </div>
+      <script>
+        async function fetchData() {
+          try {
+            const response = await fetch('/data');
+            const data = await response.json();
+            updateValue('tempValue', data.temperature);
+            updateValue('humValue', data.humidity);
+            updateValue('soilValue', data.soilMoisture);
+            updateValue('rainValue', data.rainDetected ? 'Yes' : 'No');
+            updateValue('motionValue', data.motionDetected ? 'Yes' : 'No');
+            updateValue('ldrValue', data.ldrValue);
+            updateValue('co2Value', data.co2Level);
+            updateValue('smokeValue', data.smokeValue ? 'Yes' : 'No');
+          } catch (error) {
+            console.error('Error fetching data:', error);
+          }
+        }
+
+        function updateValue(id, value) {
+          const element = document.getElementById(id);
+          element.textContent = value;
+          element.classList.remove('fade-in');
+          void element.offsetWidth; // Trigger reflow
+          element.classList.add('fade-in');
+        }
+
+        setInterval(fetchData, 2000);
+      </script>
+    </body>
+    </html>
+    )";
     return html;
 }
 

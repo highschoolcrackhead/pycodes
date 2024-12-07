@@ -1,11 +1,11 @@
-#version 1.5
+#version 1.5.1
 
 from tabulate import tabulate
 from PIL import Image
 import qrcode as qr
 import mysql.connector as sql
 
-database = sql.connect(host='localhost', user='root', password='Pravar@123')
+database = sql.connect(host='localhost', user='root', password='root')
 cursor = database.cursor()
 admin_pin = 123
 

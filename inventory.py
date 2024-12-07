@@ -1,4 +1,4 @@
-#version 1.2
+#version 1.5
 
 from tabulate import tabulate
 from PIL import Image
@@ -11,12 +11,10 @@ admin_pin = 123
 
 cursor.execute('create database if not exists inventory;')
 cursor.execute('create database if not exists cart;')
-cursor.execute('create database if not exists transaction;')
 
-cursor.execute('use inventory;')
-cursor.execute('create table if not exists product (ID int primary key, Name varchar(25), Brand varchar(25), Quantity int, Price float);')
+cursor.execute('create table if not exists inventory.product (ID int primary key, Name varchar(25), Brand varchar(25), Quantity int, Price float);')
 
-cursor.execute('create table if not exists customer (MobileNo bigint(10) primary key, FName varchar(15), LName varchar(15), CustID varchar(36), PIN int(4) default 9999, CartEmpty bool default True);')        
+cursor.execute('create table if not exists inventory.customer (MobileNo bigint(10) primary key, FName varchar(15), LName varchar(15), CustID varchar(36), PIN int(4) default 9999, CartEmpty bool default True);')        
 
 print('Welcome to Inventory Manager')
 
@@ -38,23 +36,20 @@ def ask_choice(choice_list : list, question : str = "Enter choice", sql_table : 
         else :
             print(tabulate(choice_list, tablefmt='pretty', headers=heads))
 
-        try:
-            ch = abs(int(input(f'{question}: ')))
-            if not check_choice:
-                return ch if ch else 0
-            else:
-                if sql_table:
-                    if ch not in id:
-                        print('\n','Invalid choice!')
-                    else:
-                        break
-                else:
-                    if ch not in range(n):
-                        print('\n','Invalid choice!')
-                    else:
-                        break
-        except ValueError:
-            print('\n', 'Invalid choice!')
+        if not check_choice:
+            x = input(f'{question}: ')
+            ch = x if x else 0
+            break
+        else:
+            try:
+                ch = abs(int(input(f'{question}: ')))
+                if (sql_table) and (ch not in id):
+                    print('\n','Invalid choice!')
+                elif ch not in range(n):
+                    print('\n','Invalid choice!')
+                else: break
+            except ValueError:
+                print('\n', 'Invalid choice!')
     return ch
 
 def homepage():
@@ -71,15 +66,13 @@ def homepage():
 class Admin:
 
     def __init__(self):
-        global admin_pin
-
         pin = ask_choice(['Go Back'], 'Enter PIN', check_choice=False)
+        print(pin)
         
-        match pin:
-            case 0: homepage()
-            case admin_pin: self.main()
+        if pin == str(admin_pin): self.main()
+        elif pin == '0': homepage()
+        else: Admin()
  
-
     def main(self):
 
         opt_list = ['Go Back', 'Add Item', 'Update Item', 'Delete Item', 'Display all items', 'Check low stock Items', 'Check Customer details']
@@ -131,7 +124,6 @@ class Admin:
                     case 0: self.main()
                     case 1: self.add_item()
                     
-
     def update_item(self):
         cursor.execute('select * from inventory.product;')
         print('__'*15, '\n')
@@ -171,12 +163,12 @@ class Admin:
     def delete_item(self):
 
         cursor.execute('select * from inventory.product;')
-        ch = ask_choice(cursor.fetchall(), 'Enter Product ID (0 to cancel)', True, False)
-        if ch == 0:
+        ch = ask_choice(cursor.fetchall(), 'Enter Product ID (leave BLANK to cancel)', True, False)
+        if not ch or ch == 0:
             self.main()
         else:
             try:
-                cursor.execute(f'delete from inventory.product where ID = {ch}')
+                cursor.execute(f'delete from inventory.product where ID = {int(ch)}')
             except Exception as e:
                 print('__'*15, '\n')
                 print(e)
@@ -190,17 +182,17 @@ class Admin:
 
     def display(self):
         cursor.execute('select * from inventory.product;')
-        ask_choice(cursor.fetchall(), 'Enter 0 to continue', True, False)
+        ask_choice(cursor.fetchall(), 'Press ENTER to continue', True, False)
         self.main()
 
     def low_stock(self):
         cursor.execute('select * from inventory.product where quantity < 200;')
-        ask_choice(cursor.fetchall(), "Enter 0 to continue", True, False)
+        ask_choice(cursor.fetchall(), "Press ENTER to continue", True, False)
         self.main()
 
     def cust_details(self):
         cursor.execute('select MobileNo, concat(Fname, " ", Lname) as "Name", if(CartEmpty, "True", "False") as "Empty Cart" from inventory.customer;')
-        ask_choice(cursor.fetchall(), 'Enter 0 to continue', True, False)
+        ask_choice(cursor.fetchall(), 'Press ENTER to continue', True, False)
         self.main()
 
 class Customer:
@@ -297,7 +289,7 @@ class Customer:
 
     def view_item(self):
         cursor.execute('select * from inventory.product;')
-        ask_choice(cursor.fetchall(), 'Enter 0 to continue', True, False)
+        ask_choice(cursor.fetchall(), 'Press ENTER to continue', True, False)
         self.main()
 
     def view_cart(self):
@@ -332,7 +324,6 @@ class Customer:
                         print('Succesfully updated Cart!')
                         self.main()
 
-
     def payment(self):
         cursor.execute(f'select cartempty from inventory.customer where mobileno = {self.mob};')
         empty = cursor.fetchall()[0][0]
@@ -365,7 +356,9 @@ class Customer:
         self.checkout()   
 
     def scan(self):
-        text = 'https://github.com/highschoolcrackhead/pycodes/tree/main'
+        cursor.execute(f'select sum(Amount) from cart.{self.custID};')
+        am = cursor.fetchall()[0][0]
+        text = f'upi://pay?pa=8218178871@fam&pn=Shopkeeper&am={am}'
 
         code = qr.make(text)
         code.save('qrCode.img')

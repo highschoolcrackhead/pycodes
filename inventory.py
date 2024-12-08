@@ -1,9 +1,10 @@
-#version 1.5.1
+#version 2.0
 
 from tabulate import tabulate
 from PIL import Image
 import qrcode as qr
 import mysql.connector as sql
+import matplotlib.pyplot as plt
 
 database = sql.connect(host='localhost', user='root', password='root')
 cursor = database.cursor()
@@ -75,7 +76,7 @@ class Admin:
  
     def main(self):
 
-        opt_list = ['Go Back', 'Add Item', 'Update Item', 'Delete Item', 'Display all items', 'Check low stock Items', 'Check Customer details']
+        opt_list = ['Go Back', 'Add Item', 'Update Item', 'Delete Item', 'Display all items', 'Visualize Data','Check low stock Items', 'Check Customer details']
         ch = ask_choice(opt_list)
 
         match ch:
@@ -84,8 +85,9 @@ class Admin:
             case 2: self.update_item()
             case 3: self.delete_item()
             case 4: self.display()
-            case 5: self.low_stock()
-            case 6: self.cust_details()
+            case 5: self.graphs()
+            case 6: self.low_stock()
+            case 7: self.cust_details()
 
     def add_item(self):
         print('__'*15, '\n')
@@ -185,6 +187,38 @@ class Admin:
         ask_choice(cursor.fetchall(), 'Press ENTER to continue', True, False)
         self.main()
 
+    def graphs(self):
+        opt_list = ['Go Back', 'Product vs. Quantity', 'Product vs. Price']
+        ch = ask_choice(opt_list, 'Select an option')
+
+        typ_ch = ask_choice(['Go Back', 'Bar Graph', 'Pie Graph'])
+
+        def plotter(y : str, type : int = 1):
+            cursor.execute('select name, price, quantity from inventory.product;')
+            prod = [] ; price = [] ; quant = []
+            for i in cursor.fetchall():
+                prod.append(i[0]) ;  price.append(i[1]) ; quant.append(i[2])
+            if type == 1:
+                plt.xlabel('Product')
+                if y == 'price':
+                    plt.bar(prod, price)
+                    plt.ylabel('Price')
+                elif y == 'quantity':
+                    plt.bar(prod, quant)
+                    plt.ylabel('Quantity')
+            else:
+                if y == 'price':
+                    plt.pie(price, labels=prod, autopct=lambda x : f'{x:.2f} INR')
+                elif y == 'quantity':
+                    plt.pie(quant, labels=prod, autopct=lambda x : f'{x}')
+            plt.show()
+            self.graphs()
+
+        match ch:
+            case 0: self.main()
+            case 1: plotter('quantity', typ_ch)
+            case 2: plotter('price', typ_ch)
+
     def low_stock(self):
         cursor.execute('select * from inventory.product where quantity < 200;')
         ask_choice(cursor.fetchall(), "Press ENTER to continue", True, False)
@@ -261,7 +295,12 @@ class Customer:
         name = data[0][1]
         stock = data[0][2]
 
-        qty = abs(int(input('Enter Quantity: ')))
+        try:
+            qty = abs(int(input('Enter Quantity: ')))
+        except:
+            print('__'*15, '\n')
+            print('Invalid Input!')
+            self.buy_item()
 
         if (qty != 0) and (qty <= stock):
             
